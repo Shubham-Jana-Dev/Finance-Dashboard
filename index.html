@@ -459,7 +459,7 @@
                         </div>
                         <div class="flex items-center">
                             <span class="font-bold text-rose-600 text-sm">- ${formatCurrency(exp.amount)}</span>
-                            <button onclick="deleteTransaction('expense', '${exp.id}')" class="text-gray-400 hover:text-rose-600 ml-3 transition p-1 rounded-full hover:bg-rose-50"><i class="ph-trash-simple text-lg"></i></button>
+                            <button onclick="deleteTransaction('expenses', '${exp.id}')" class="text-gray-400 hover:text-rose-600 ml-3 transition p-1 rounded-full hover:bg-rose-50"><i class="ph-trash-simple text-lg"></i></button>
                         </div>
                     </div>
                 `;
@@ -486,7 +486,7 @@
                         </div>
                         <div class="flex items-center">
                             <span class="font-bold text-teal-600 text-sm">+ ${formatCurrency(inc.amount)}</span>
-                            <button onclick="deleteTransaction('income', '${inc.id}')" class="text-gray-400 hover:text-rose-600 ml-3 transition p-1 rounded-full hover:bg-rose-50"><i class="ph-trash-simple text-lg"></i></button>
+                            <button onclick="deleteTransaction('incomes', '${inc.id}')" class="text-gray-400 hover:text-rose-600 ml-3 transition p-1 rounded-full hover:bg-rose-50"><i class="ph-trash-simple text-lg"></i></button>
                         </div>
                     </div>
                 `;
@@ -534,31 +534,28 @@
         };
 
 
-        // --- DELETE TRANSACTION LOGIC (NEW) ---
+        // --- DELETE TRANSACTION LOGIC (FIXED) ---
         const deleteTransaction = (listType, itemId) => {
-            let list, item, amount;
-            
-            // Note: We only allow deletion of outstanding debt items currently displayed.
-            if (listType === 'lent' || listType === 'borrowed') {
-                item = state[listType].find(i => i.id === itemId && i.status === 'outstanding');
-                if (!item) {
-                    showTemporaryMessage(`Cannot delete: This debt is not outstanding.`, "error");
-                    return;
-                }
-            } else {
-                item = state[listType].find(i => i.id === itemId);
+            const list = state[listType];
+
+            // Basic check to ensure we are operating on a valid array property
+            if (!list || !Array.isArray(list)) {
+                console.error(`Invalid list type: ${listType}`);
+                showTemporaryMessage("Internal error: Invalid list type.", "error");
+                return;
             }
             
+            const item = list.find(i => i.id === itemId);
             if (!item) {
                 showTemporaryMessage(`Item not found for deletion.`, "error");
                 return;
             }
 
-            amount = parseFloat(item.amount);
+            const amount = parseFloat(item.amount);
             
             // 1. Reverse the effect on the balance
             switch (listType) {
-                case 'income':
+                case 'incomes':
                     // Income increased balance, so we subtract it.
                     if (item.sourceType === 'cash') {
                         state.cashBalance -= amount;
@@ -567,7 +564,7 @@
                     }
                     break;
 
-                case 'expense':
+                case 'expenses':
                     // Expense decreased balance, so we add it back.
                     if (item.sourceType === 'cash') {
                         state.cashBalance += amount;
@@ -577,18 +574,22 @@
                     break;
 
                 case 'lent':
-                    // Lending money decreased cash (as per original logic), so we add it back.
+                    // Lending money decreased cash (default assumption in creation), so we add it back.
                     state.cashBalance += amount;
                     break;
 
                 case 'borrowed':
-                    // Borrowing money increased cash (as per original logic), so we subtract it.
+                    // Borrowing money increased cash (default assumption in creation), so we subtract it.
                     state.cashBalance -= amount;
                     break;
             }
 
+            // Apply safe rounding to balances to prevent floating point errors (THE KEY FIX)
+            state.cashBalance = parseFloat(state.cashBalance.toFixed(2));
+            state.bankBalance = parseFloat(state.bankBalance.toFixed(2));
+            
             // 2. Filter out the item from its list
-            state[listType] = state[listType].filter(i => i.id !== itemId);
+            state[listType] = list.filter(i => i.id !== itemId);
             
             // 3. Save state and notify user
             saveState();
@@ -638,6 +639,10 @@
                 state.bankBalance += amount;
                 showTemporaryMessage(`Income of ${formatCurrency(amount)} added to Bank Balance.`, "success");
             }
+            
+            // Apply safe rounding to balances
+            state.cashBalance = parseFloat(state.cashBalance.toFixed(2));
+            state.bankBalance = parseFloat(state.bankBalance.toFixed(2));
 
             saveState();
             e.target.reset();
@@ -679,6 +684,10 @@
             } else if (sourceType === 'bank') {
                 state.bankBalance -= amount;
             }
+            
+            // Apply safe rounding to balances
+            state.cashBalance = parseFloat(state.cashBalance.toFixed(2));
+            state.bankBalance = parseFloat(state.bankBalance.toFixed(2));
 
             saveState();
             showTemporaryMessage(`Expense of ${formatCurrency(amount)} recorded successfully!`, "success");
@@ -717,6 +726,10 @@
                 showTemporaryMessage(`₹ ${formatCurrency(amount)} borrowed from ${name}. Cash added.`, "success");
             }
 
+            // Apply safe rounding to balances
+            state.cashBalance = parseFloat(state.cashBalance.toFixed(2));
+            state.bankBalance = parseFloat(state.bankBalance.toFixed(2));
+            
             saveState();
             e.target.reset();
             document.getElementById('debtDate').valueAsDate = new Date();
@@ -758,6 +771,10 @@
             } else if (method === 'bank') {
                 state.bankBalance += amount;
             }
+            
+            // Apply safe rounding to balances
+            state.cashBalance = parseFloat(state.cashBalance.toFixed(2));
+            state.bankBalance = parseFloat(state.bankBalance.toFixed(2));
 
             debt.status = 'repaid';
             saveState();
@@ -824,6 +841,10 @@
             // Mark debt as repaid
             state.borrowed[debtIndex].status = 'repaid';
 
+            // Apply safe rounding to balances
+            state.cashBalance = parseFloat(state.cashBalance.toFixed(2));
+            state.bankBalance = parseFloat(state.bankBalance.toFixed(2));
+            
             saveState();
             document.getElementById('modal').classList.add('hidden');
             showTemporaryMessage(`Debt repaid and ${formatCurrency(amount)} deducted from ${method === 'cash' ? 'Cash' : 'Bank'}.`, "success");
