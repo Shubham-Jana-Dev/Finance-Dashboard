@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sleek Finance Dashboard</title>
+    <title>Sleek Personal Finance Dashboard</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Phosphor Icons (for cool icons) -->
     <script src="https://unpkg.com/phosphor-icons"></script>
+    <!-- Load Chart.js for Data Visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
@@ -66,8 +68,8 @@
     <div class="max-w-7xl mx-auto">
         <!-- HEADER SECTION (Cool Gradient) -->
         <header class="text-center mb-8">
-            <h1 class="text-4xl font-extrabold text-gray-800">Sleek Finance Dashboard</h1>
-            <p class="text-gray-500 mt-1">Your powerful, real-time personal ledger. Stay on top of your money.</p>
+            <h1 class="text-4xl font-extrabold text-gray-800">Sleek Personal Finance Dashboard</h1>
+            <p class="text-gray-500 mt-1">Your comprehensive tool for tracking income, expenses, and debts.</p>
         </header>
 
         <!-- DASHBOARD / SUMMARY SECTION -->
@@ -79,7 +81,7 @@
             </div>
             <div class="text-center p-3 sm:p-4 rounded-xl bg-white bg-opacity-15 backdrop-blur-sm">
                 <i class="ph-money text-2xl mb-1"></i>
-                <p class="text-xs opacity-80 font-medium">Hard Cash</p>
+                <p class="text-xs opacity-80 font-medium">Cash Balance</p>
                 <p id="cashBalanceDisplay" class="text-2xl font-extrabold mt-1 text-teal-200">₹ 0.00</p>
             </div>
             <div class="text-center p-3 sm:p-4 rounded-xl bg-white bg-opacity-15 backdrop-blur-sm">
@@ -107,18 +109,18 @@
                     </h2>
                     <form id="balanceUpdateForm" class="space-y-4">
                         <div>
-                            <label for="initialCash" class="block text-sm font-medium text-gray-700">Hard Cash</label>
-                            <input type="number" id="initialCash" placeholder="Cash Amount" required>
+                            <label for="initialCash" class="block text-sm font-medium text-gray-700">Cash Balance (Hard Cash)</label>
+                            <input type="number" id="initialCash" placeholder="Initial Cash Amount" required>
                         </div>
                         <div>
                             <label for="initialBank" class="block text-sm font-medium text-gray-700">Bank Account Balance</label>
-                            <input type="number" id="initialBank" placeholder="Bank Balance" required>
+                            <input type="number" id="initialBank" placeholder="Initial Bank Balance" required>
                         </div>
-                        <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 font-semibold shadow-md shadow-indigo-200">Set Initial Balances</button>
+                        <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 font-semibold shadow-md shadow-indigo-200">Set Balances</button>
                     </form>
                 </div>
 
-                <!-- 2. ADD INCOME -->
+                <!-- 2. ADD INCOME (UPDATED WITH SOURCE TYPE) -->
                 <div id="incomeCard" class="card p-6">
                     <h2 class="text-xl font-bold mb-4 flex items-center text-gray-700">
                         <i class="ph-arrow-circle-down text-teal-500 mr-2"></i> Add Income
@@ -126,8 +128,17 @@
                     <form id="incomeForm" class="space-y-4">
                         <div><input type="number" id="incomeAmount" placeholder="Amount (₹)" required></div>
                         <div><input type="date" id="incomeDate" value="" required></div>
+                        <!-- NEW: Income Medium (Cash or Bank) -->
+                        <div>
+                            <label for="incomeSourceType" class="block text-sm font-medium text-gray-700">Income Medium</label>
+                            <select id="incomeSourceType" required>
+                                <option value="cash">Cash Received</option>
+                                <option value="bank">Bank/UPI Received</option>
+                            </select>
+                        </div>
+                        <!-- END NEW FIELD -->
                         <div><input type="text" id="incomeSource" placeholder="Source (e.g., Salary, Gift)" required></div>
-                        <div><input type="text" id="incomeRemark" placeholder="Brief description" required></div>
+                        <div><input type="text" id="incomeRemark" placeholder="Brief Description" required></div>
                         <button type="submit" class="w-full bg-teal-600 text-white py-2.5 rounded-xl hover:bg-teal-700 font-semibold shadow-md shadow-teal-200">Record Income</button>
                     </form>
                 </div>
@@ -140,9 +151,22 @@
                     <form id="expenseForm" class="space-y-4">
                         <div><input type="number" id="expenseAmount" placeholder="Amount (₹)" required></div>
                         <div><input type="date" id="expenseDate" value="" required></div>
-                        <div><input type="text" id="expenseLocation" placeholder="Location/Vendor" required></div>
-                        <div><input type="text" id="expenseRemark" placeholder="What was it for?" required></div>
                         <div>
+                            <select id="expenseCategory" required>
+                                <option value="" disabled selected>Select Category</option>
+                                <option value="Food & Drink">Food & Drink</option>
+                                <option value="Transport">Transport</option>
+                                <option value="Bills & Rent">Bills & Rent</option>
+                                <option value="Shopping">Shopping</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Health">Health & Fitness</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div><input type="text" id="expenseLocation" placeholder="Location/Vendor" required></div>
+                        <div><input type="text" id="expenseRemark" placeholder="What was the expense for?" required></div>
+                        <div>
+                            <label for="expenseSourceType" class="block text-sm font-medium text-gray-700">Payment Medium</label>
                             <select id="expenseSourceType" required>
                                 <option value="cash">Cash Payment</option>
                                 <option value="bank">Bank/UPI Payment</option>
@@ -156,18 +180,29 @@
             <!-- COLUMN 2: DEBT TRACKER & HISTORY -->
             <div class="lg:col-span-2 space-y-6">
 
+                <!-- CHART SECTION -->
+                <div id="chartCard" class="card p-6">
+                    <h2 class="text-xl font-bold mb-4 flex items-center text-gray-700">
+                        <i class="ph-chart-pie-slice text-indigo-500 mr-2"></i> Expense Category Analysis
+                    </h2>
+                    <div class="h-80 w-full flex items-center justify-center">
+                         <canvas id="expensePieChart"></canvas>
+                         <p id="noChartData" class="text-gray-500 hidden">No expense data available.</p>
+                    </div>
+                </div>
+
                  <!-- DEBT TRACKER -->
                 <div id="debtTrackerCard" class="card p-6">
                     <h2 class="text-xl font-bold mb-4 flex items-center text-gray-700">
-                         <i class="ph-handshake text-yellow-600 mr-2"></i> Debt & Receivable Manager
+                         <i class="ph-handshake text-yellow-600 mr-2"></i> Debt Management
                     </h2>
                     <div class="grid grid-cols-2 gap-4 mb-5">
                         <div class="p-3 bg-rose-50 rounded-xl text-center border border-rose-200">
-                            <p class="text-xs text-gray-600 font-medium">I Owe (Payable)</p>
+                            <p class="text-xs text-gray-600 font-medium">My Debts (Payable)</p>
                             <p id="totalBorrowedDisplay" class="text-2xl font-bold text-rose-600 mt-1">₹ 0.00</p>
                         </div>
                         <div class="p-3 bg-teal-50 rounded-xl text-center border border-teal-200">
-                            <p class="text-xs text-gray-600 font-medium">I am Owed (Receivable)</p>
+                            <p class="text-xs text-gray-600 font-medium">Money Owed to Me (Receivable)</p>
                             <p id="totalLentDisplay" class="text-2xl font-bold text-teal-600 mt-1">₹ 0.00</p>
                         </div>
                     </div>
@@ -182,20 +217,20 @@
                         <div class="col-span-2"><input type="number" id="debtAmount" placeholder="Amount (₹)" required></div>
                         <div class="col-span-2"><input type="date" id="debtDate" value="" required></div>
                         <div class="col-span-full"><input type="text" id="debtName" placeholder="Person's Name" required></div>
-                        <div class="col-span-full"><input type="text" id="debtRemark" placeholder="Reason for debt" required></div>
+                        <div class="col-span-full"><input type="text" id="debtRemark" placeholder="Reason for Debt" required></div>
                         <button type="submit" class="col-span-full bg-yellow-600 text-white py-2.5 rounded-xl hover:bg-yellow-700 font-semibold shadow-md shadow-yellow-200">Add Debt Record</button>
                     </form>
 
                     <!-- DEBT LISTS -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                         <div>
-                            <h3 class="text-md font-bold text-teal-600 border-b-2 border-teal-100 pb-1 mb-3 flex items-center"><i class="ph-arrow-down-right-bold mr-1"></i> Receivables</h3>
+                            <h3 class="text-md font-bold text-teal-600 border-b-2 border-teal-100 pb-1 mb-3 flex items-center"><i class="ph-arrow-down-right-bold mr-1"></i> Receivables (Owed to Me)</h3>
                             <div id="lentList" class="space-y-3">
                                 <!-- Lent items will be listed here -->
                             </div>
                         </div>
                         <div>
-                            <h3 class="text-md font-bold text-rose-600 border-b-2 border-rose-100 pb-1 mb-3 flex items-center"><i class="ph-arrow-up-left-bold mr-1"></i> Payables</h3>
+                            <h3 class="text-md font-bold text-rose-600 border-b-2 border-rose-100 pb-1 mb-3 flex items-center"><i class="ph-arrow-up-left-bold mr-1"></i> Payables (My Debt)</h3>
                             <div id="borrowedList" class="space-y-3">
                                 <!-- Borrowed items will be listed here -->
                             </div>
@@ -221,6 +256,17 @@
 
             </div>
         </div>
+
+        <!-- Footer / Statement of Intent and Credit (UPDATED) -->
+        <footer class="mt-12 py-6 border-t border-gray-200 text-center">
+            <p class="text-sm text-gray-600 max-w-2xl mx-auto">
+                This web app is **intentionally simple** and designed for **user privacy**. All financial data is stored exclusively in your device's local storage; **no external database** is used.
+            </p>
+            <p class="mt-2 text-sm font-semibold text-indigo-700">
+                Developed with <span class="text-red-500">&hearts;</span> by Shubham Jana
+            </p>
+        </footer>
+
     </div>
 
     <!-- Confirmation Modal (Custom for no alert()) -->
@@ -245,7 +291,7 @@
 
 
     <script>
-        const STORAGE_KEY = 'financeTrackerState_enhanced';
+        const STORAGE_KEY = 'financeTrackerState_enhanced_en';
         let state = {
             bankBalance: 0,
             cashBalance: 0,
@@ -254,6 +300,7 @@
             lent: [],
             borrowed: []
         };
+        let expenseChart = null; // Variable to hold the Chart.js instance
 
         // --- Utility Functions ---
 
@@ -292,6 +339,7 @@
         const renderApp = () => {
             renderDashboard();
             renderLists();
+            renderCharts(); // Added chart rendering
         };
 
         const renderDashboard = () => {
@@ -314,6 +362,80 @@
             document.getElementById('initialBank').value = state.bankBalance.toFixed(2);
         };
 
+        // --- Chart Rendering Function ---
+        const renderCharts = () => {
+            const expenseDataByCategory = state.expenses.reduce((acc, expense) => {
+                const category = expense.category || 'Uncategorized'; // Ensure category exists (fallback for old data)
+                acc[category] = (acc[category] || 0) + parseFloat(expense.amount);
+                return acc;
+            }, {});
+
+            const categories = Object.keys(expenseDataByCategory);
+            const amounts = Object.values(expenseDataByCategory);
+
+            const ctx = document.getElementById('expensePieChart').getContext('2d');
+            const noDataEl = document.getElementById('noChartData');
+
+            // Define colors for categories
+            const categoryColors = {
+                'Food & Drink': '#FF6384',
+                'Transport': '#36A2EB',
+                'Bills & Rent': '#FFCE56',
+                'Shopping': '#4BC0C0',
+                'Entertainment': '#9966FF',
+                'Health': '#FF9F40',
+                'Other': '#C9CBCF',
+                'Debt Repayment': '#7E22CE', // Specific color for debt repayment
+                'Uncategorized': '#A0A0A0'
+            };
+
+            // Destroy old chart instance if it exists
+            if (expenseChart) {
+                expenseChart.destroy();
+            }
+
+            if (categories.length === 0) {
+                noDataEl.classList.remove('hidden');
+                document.getElementById('expensePieChart').style.display = 'none';
+                return;
+            }
+
+            noDataEl.classList.add('hidden');
+            document.getElementById('expensePieChart').style.display = 'block';
+
+            expenseChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: amounts,
+                        backgroundColor: categories.map(cat => categoryColors[cat] || categoryColors['Other']),
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    family: 'Inter',
+                                    size: 14
+                                }
+                            }
+                        },
+                        title: {
+                            display: false,
+                            text: 'Expense Breakdown by Category'
+                        }
+                    }
+                }
+            });
+        };
+
+        // --- List Rendering Function ---
         const renderLists = () => {
             // Helper for list item visual
             const listClasses = "p-3 rounded-lg flex justify-between items-center transition duration-200 hover:shadow-md border";
@@ -323,12 +445,15 @@
             expenseList.innerHTML = '';
             state.expenses.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(exp => {
                 const icon = exp.sourceType === 'cash' ? 'ph-money' : 'ph-bank';
+                // Display category in the list
+                const categoryText = exp.category ? `<span class="text-xs text-indigo-500 font-semibold ml-2">(${exp.category})</span>` : '';
+
                 expenseList.innerHTML += `
                     <div class="${listClasses} border-rose-200 bg-white shadow-sm">
                         <div class="flex items-center space-x-3">
                             <i class="${icon} text-rose-500 text-xl"></i>
                             <div>
-                                <p class="text-sm font-semibold text-gray-800">${exp.remark}</p>
+                                <p class="text-sm font-semibold text-gray-800">${exp.remark} ${categoryText}</p>
                                 <p class="text-xs text-gray-500">${exp.location} | ${exp.date}</p>
                             </div>
                         </div>
@@ -343,13 +468,17 @@
             const incomeList = document.getElementById('incomeList');
             incomeList.innerHTML = '';
             state.incomes.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(inc => {
+                // Use the new sourceType to determine the icon
+                const icon = inc.sourceType === 'cash' ? 'ph-money' : 'ph-bank';
+                const sourceTypeLabel = inc.sourceType === 'cash' ? 'Cash' : 'Bank/UPI';
+
                 incomeList.innerHTML += `
                     <div class="${listClasses} border-teal-200 bg-white shadow-sm">
                         <div class="flex items-center space-x-3">
-                            <i class="ph-gift text-teal-500 text-xl"></i>
+                            <i class="${icon} text-teal-500 text-xl"></i>
                             <div>
                                 <p class="text-sm font-semibold text-gray-800">${inc.remark}</p>
-                                <p class="text-xs text-gray-500">${inc.source} | ${inc.date}</p>
+                                <p class="text-xs text-gray-500">${inc.source} | ${inc.date} (${sourceTypeLabel})</p>
                             </div>
                         </div>
                         <span class="font-bold text-teal-600 text-sm">+ ${formatCurrency(inc.amount)}</span>
@@ -368,11 +497,11 @@
                             <p class="font-semibold text-gray-800">${d.name} <span class="text-teal-600 font-bold ml-1 text-base">${formatCurrency(d.amount)}</span></p>
                             <p class="text-xs text-gray-600">${d.remark} (${d.date})</p>
                         </div>
-                        <button onclick="showRepaymentModal('${d.id}')" class="bg-teal-500 text-white text-xs px-3 py-1.5 rounded-full hover:bg-teal-600 font-medium transition mt-2 sm:mt-0 shadow-sm">Received</button>
+                        <button onclick="showRepaymentModal('${d.id}')" class="bg-teal-500 text-white text-xs px-3 py-1.5 rounded-full hover:bg-teal-600 font-medium transition mt-2 sm:mt-0 shadow-sm">Repaid</button>
                     </div>
                 `;
             });
-            if (lentList.innerHTML === '') lentList.innerHTML = '<p class="text-sm text-gray-500">All receivables cleared.</p>';
+            if (lentList.innerHTML === '') lentList.innerHTML = '<p class="text-sm text-gray-500">All receivables have been settled.</p>';
 
 
             // 4. Borrowed List (Outstanding - Payables)
@@ -385,11 +514,11 @@
                             <p class="font-semibold text-gray-800">${d.name} <span class="text-rose-600 font-bold ml-1 text-base">${formatCurrency(d.amount)}</span></p>
                             <p class="text-xs text-gray-600">${d.remark} (${d.date})</p>
                         </div>
-                        <button onclick="markBorrowedRepaid('${d.id}')" class="bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-full hover:bg-indigo-600 font-medium transition mt-2 sm:mt-0 shadow-sm">Repaid</button>
+                        <button onclick="markBorrowedRepaid('${d.id}')" class="bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-full hover:bg-indigo-600 font-medium transition mt-2 sm:mt-0 shadow-sm">Repay</button>
                     </div>
                 `;
             });
-            if (borrowedList.innerHTML === '') borrowedList.innerHTML = '<p class="text-sm text-gray-500">All payables cleared.</p>';
+            if (borrowedList.innerHTML === '') borrowedList.innerHTML = '<p class="text-sm text-gray-500">All payables have been settled.</p>';
         };
 
         // --- Form Handling Functions ---
@@ -414,6 +543,7 @@
             e.preventDefault();
             const amount = parseFloat(document.getElementById('incomeAmount').value);
             const date = document.getElementById('incomeDate').value;
+            const sourceType = document.getElementById('incomeSourceType').value; // Get new field
             const source = document.getElementById('incomeSource').value;
             const remark = document.getElementById('incomeRemark').value;
 
@@ -422,11 +552,19 @@
                 return;
             }
 
-            const newIncome = { id: generateId(), amount, date, source, remark };
+            const newIncome = { id: generateId(), amount, date, source, remark, sourceType }; // Added sourceType
             state.incomes.push(newIncome);
-            state.cashBalance += amount;
+
+            // Update balance based on sourceType
+            if (sourceType === 'cash') {
+                state.cashBalance += amount;
+                showTemporaryMessage(`Income of ${formatCurrency(amount)} added to Cash.`, "success");
+            } else { // bank
+                state.bankBalance += amount;
+                showTemporaryMessage(`Income of ${formatCurrency(amount)} added to Bank Balance.`, "success");
+            }
+
             saveState();
-            showTemporaryMessage(`Income of ${formatCurrency(amount)} added to Cash.`, "success");
             e.target.reset();
             document.getElementById('incomeDate').valueAsDate = new Date();
         });
@@ -435,12 +573,17 @@
             e.preventDefault();
             const amount = parseFloat(document.getElementById('expenseAmount').value);
             const date = document.getElementById('expenseDate').value;
+            const category = document.getElementById('expenseCategory').value; // Get category
             const location = document.getElementById('expenseLocation').value;
             const remark = document.getElementById('expenseRemark').value;
             const sourceType = document.getElementById('expenseSourceType').value;
 
             if (amount <= 0 || isNaN(amount)) {
                 showTemporaryMessage("Invalid expense amount entered.", "error");
+                return;
+            }
+             if (!category) {
+                showTemporaryMessage("Please select an expense category.", "error");
                 return;
             }
 
@@ -453,7 +596,7 @@
                 return;
             }
 
-            const newExpense = { id: generateId(), amount, date, location, remark, sourceType };
+            const newExpense = { id: generateId(), amount, date, category, location, remark, sourceType }; // Added category
             state.expenses.push(newExpense);
 
             if (sourceType === 'cash') {
@@ -484,6 +627,7 @@
             const newDebt = { id: generateId(), amount, date, name, remark, status: 'outstanding' };
 
             if (debtType === 'lent') {
+                // Lending money should come from an account. Defaulting to Cash for simplicity.
                 if (amount > state.cashBalance) {
                     showTemporaryMessage("Insufficient Cash to lend the amount!", "error");
                     return;
@@ -492,6 +636,7 @@
                 state.lent.push(newDebt);
                 showTemporaryMessage(`₹ ${formatCurrency(amount)} lent to ${name}. Cash deducted.`, "success");
             } else { // borrowed
+                // Borrowed money goes into an account. Defaulting to Cash for simplicity.
                 state.cashBalance += amount;
                 state.borrowed.push(newDebt);
                 showTemporaryMessage(`₹ ${formatCurrency(amount)} borrowed from ${name}. Cash added.`, "success");
@@ -512,16 +657,16 @@
             if (!debt) return;
 
             document.getElementById('modalTitle').innerHTML = `<i class="ph-arrow-square-down-fill text-teal-500 mr-2"></i> Received Repayment from ${debt.name}`;
-            document.getElementById('modalMessage').innerHTML = `Confirm receiving <span class="font-bold text-teal-600">${formatCurrency(debt.amount)}</span>. How was it paid?`;
+            document.getElementById('modalMessage').innerHTML = `Confirm receiving <span class="font-bold text-teal-600">${formatCurrency(debt.amount)}</span>. Which medium was it received in?`;
 
             document.getElementById('modalContent').innerHTML = `
                 <select id="repaymentMethod" class="w-full p-3 border rounded-lg bg-gray-50">
-                    <option value="cash">Cash Received</option>
-                    <option value="bank">UPI/Bank Transfer Received</option>
+                    <option value="cash">Received Cash</option>
+                    <option value="bank">Received UPI/Bank Transfer</option>
                 </select>
             `;
 
-            document.getElementById('modalConfirm').textContent = "Confirm & Add to Balance";
+            document.getElementById('modalConfirm').textContent = "Confirm and Add to Balance";
             document.getElementById('modalConfirm').onclick = handleLentRepayment;
             document.getElementById('modalCancel').onclick = () => document.getElementById('modal').classList.add('hidden');
             document.getElementById('modal').classList.remove('hidden');
@@ -551,17 +696,17 @@
             const debt = state.borrowed.find(d => d.id === debtId);
             if (!debt) return;
 
-            document.getElementById('modalTitle').innerHTML = `<i class="ph-arrow-square-up-fill text-rose-500 mr-2"></i> Repay to ${debt.name}`;
-            document.getElementById('modalMessage').innerHTML = `Confirm paying back <span class="font-bold text-rose-600">${formatCurrency(debt.amount)}</span>. How will you pay? (This will also be recorded as an expense.)`;
+            document.getElementById('modalTitle').innerHTML = `<i class="ph-arrow-square-up-fill text-rose-500 mr-2"></i> Repay Debt to ${debt.name}`;
+            document.getElementById('modalMessage').innerHTML = `Confirm repayment of <span class="font-bold text-rose-600">${formatCurrency(debt.amount)}</span>. Which medium will you pay with? (This will also be recorded as an expense.)`;
 
             document.getElementById('modalContent').innerHTML = `
                 <select id="repaymentExpenseMethod" class="w-full p-3 border rounded-lg bg-gray-50">
-                    <option value="cash">Pay via Cash</option>
-                    <option value="bank">Pay via Bank/UPI</option>
+                    <option value="cash">Pay with Cash</option>
+                    <option value="bank">Pay with Bank/UPI</option>
                 </select>
             `;
 
-            document.getElementById('modalConfirm').textContent = "Confirm Repayment & Deduct";
+            document.getElementById('modalConfirm').textContent = "Confirm Repayment and Deduct from Balance";
             document.getElementById('modalConfirm').onclick = () => handleBorrowedRepayment(debtId);
             document.getElementById('modalCancel').onclick = () => document.getElementById('modal').classList.add('hidden');
             document.getElementById('modal').classList.remove('hidden');
@@ -594,6 +739,7 @@
                 id: generateId(),
                 amount: amount,
                 date: new Date().toISOString().split('T')[0],
+                category: "Debt Repayment", // Added a category for repayment
                 location: debt.name,
                 remark: `Debt Repayment to ${debt.name}`,
                 sourceType: method
@@ -642,6 +788,10 @@
             document.getElementById('incomeDate').value = today;
             document.getElementById('expenseDate').value = today;
             document.getElementById('debtDate').value = today;
+
+            // Initialize select category to the first non-disabled option
+            document.getElementById('expenseCategory').selectedIndex = 1;
+
             renderApp();
         };
 
