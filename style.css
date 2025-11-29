@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f0f4f8; /* Light gray-blue background */
+    color: #1f2937;
+}
+
+.card {
+    background-color: white;
+    border-radius: 1rem; /* More rounded corners */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px); /* Subtle lift effect */
+}
+
+.header-section {
+    background: linear-gradient(105deg, #4f46e5 0%, #10b981 100%); /* Indigo to Teal gradient */
+    color: white;
+    padding: 2rem 1.5rem;
+    border-radius: 1rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 25px -5px rgba(79, 70, 229, 0.4);
+}
+
+input, select {
+    border-radius: 0.5rem;
+    border: 2px solid #e5e7eb;
+    padding: 0.65rem 1rem;
+    width: 100%;
+    background-color: #f9fafb;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+input:focus, select:focus {
+    border-color: #4f46e5; /* Primary color focus */
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+button {
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.transaction-list-item {
+    border-left-width: 4px;
+    padding: 0.75rem;
+}
+
+/* Ensure smooth scrolling and prevent horizontal overflow on mobile */
+html, body {
+    overflow-x: hidden;
+}
