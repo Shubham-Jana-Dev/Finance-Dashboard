@@ -39,7 +39,7 @@ This is a clean, modern, and **privacy-focused** web application designed to hel
 
 ### Accessing the App
 
-The application can be accessed instantly via the live GitHub Pages link: [https://shubhamjana32.github.io/Finance-Dashboard/](https://shubhamjana32.github.io/Finance-Dashboard/)
+The application can be accessed instantly via the live GitHub Pages link: [https://shubham-jana-dev.github.io/Finance-Dashboard/](https://shubham-jana-dev.github.io/Finance-Dashboard/)
 
 ### Local Development
 
@@ -47,7 +47,7 @@ If you wish to run or modify the code locally:
 
 1.  **Clone the Repository:**
     ```bash
-    git clone [https://github.com/shubhamjana32/Finance-Dashboard](https://github.com/shubhamjana32/Finance-Dashboard)
+    git clone [https://shubham-jana-dev.github.io/Finance-Dashboard/](https://shubham-jana-dev.github.io/Finance-Dashboard/)
     ```
 2.  **Open the File:**
     Navigate to the project directory and open the `index.html` file in your preferred web browser.
